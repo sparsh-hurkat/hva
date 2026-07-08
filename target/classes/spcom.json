@@ -1,0 +1,12 @@
+[
+  {
+    "appName": "SAMPLE_APP",
+    "repositories": [
+      {
+        "repoName": "sample-repo",
+        "sva": "12321",
+        "sca": "asdasdfasdfasdfasdfasdfasdfasdfasdfsdf"
+      }
+    ]
+  }
+]

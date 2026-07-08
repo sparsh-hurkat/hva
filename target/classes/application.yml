@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: scan-orchestrator
+
+ado:
+  base-url: https://dev.azure.com
+  organization: spglobal
+  project: ratingsproducts
+  api-version: "7.0"
+  pat: ${ADO_PAT:}
+  # TODO(you): paste the exact WIQL text used to find "upcoming release work items"
+  release-work-item-wiql: "SELECT [System.Id] FROM WorkItems WHERE [System.WorkItemType] = 'Release' AND [System.State] <> 'Closed'"
+  build-id-delimiter: ","
+  # TODO(you): the real template parameter name/value your pipelines use to skip the deploy stage
+  skip-deploy-parameter-name: "TODO_SKIP_DEPLOY_PARAM_NAME"
+  skip-deploy-parameter-value: "TODO_SKIP_DEPLOY_PARAM_VALUE"
+  build-poll-interval-seconds: 30
+  build-poll-timeout-minutes: 60
+
+mend:
+  base-url: https://api-spglobal.mend.io
+  email: ${MEND_EMAIL:}
+  org-token: ${MEND_ORG_TOKEN:}
+  user-key: ${MEND_USER_KEY:}
+  # Mend's API requires bypassing SSL verification per the original integration notes.
+  insecure-ssl: true
+
+spcom:
+  # classpath resource by default; point this at an absolute file path to override
+  path: "classpath:spcom.json"
+
+logging:
+  level:
+    com.spglobal.scanorchestrator: DEBUG
