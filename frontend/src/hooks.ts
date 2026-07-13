@@ -2,8 +2,8 @@
 // picks which ScanApi implementation every hook here talks to.
 
 import { useEffect, useRef } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { realApiClient, type RunStatus, type ScanApi } from "./api";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { realApiClient, type GetBuildIssuesParams, type RunStatus, type ScanApi } from "./api";
 import { mockApiClient } from "./mockData";
 
 const api: ScanApi = import.meta.env.VITE_USE_MOCK_API === "true" ? mockApiClient : realApiClient;
@@ -52,5 +52,15 @@ export function useBuildDetail(workItemId: number, buildId: number) {
   return useQuery({
     queryKey: ["buildDetail", workItemId, buildId],
     queryFn: () => api.getBuildDetail(workItemId, buildId),
+  });
+}
+
+/** Server-side paginated/sorted/searched issue list. Keeps the previous page's data on
+ * screen while the next one loads, instead of flashing a loading state on every change. */
+export function useBuildIssues(workItemId: number, buildId: number, params: GetBuildIssuesParams) {
+  return useQuery({
+    queryKey: ["buildIssues", workItemId, buildId, params],
+    queryFn: () => api.getBuildIssues(workItemId, buildId, params),
+    placeholderData: keepPreviousData,
   });
 }

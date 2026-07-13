@@ -1,3 +1,5 @@
+import { Button, Stack, Text } from "@mantine/core";
+import { Play } from "lucide-react";
 import { useScanRunStatus, useStartScan } from "../hooks";
 
 /** The button that kicks off the whole ADO -> scan process, plus its in-progress status. */
@@ -7,17 +9,29 @@ export function StartScanButton() {
   const isRunning = runStatus?.status === "IN_PROGRESS";
 
   return (
-    <div className="start-scan">
-      <button
-        className="start-scan-button"
+    <Stack gap={6} align="flex-start">
+      <Button
+        leftSection={<Play size={16} />}
+        loading={isRunning || startScan.isPending}
         onClick={() => startScan.mutate()}
-        disabled={isRunning || startScan.isPending}
       >
         {isRunning ? "Scan in progress..." : "Start scan"}
-      </button>
-      {isRunning && <p className="start-scan-step">{runStatus.currentStep}</p>}
-      {runStatus?.status === "FAILED" && <p className="start-scan-error">Last run failed: {runStatus.error}</p>}
-      {startScan.isError && <p className="start-scan-error">Could not start scan: {startScan.error.message}</p>}
-    </div>
+      </Button>
+      {isRunning && (
+        <Text size="sm" c="dimmed">
+          {runStatus.currentStep}
+        </Text>
+      )}
+      {runStatus?.status === "FAILED" && (
+        <Text size="sm" c="red">
+          Last run failed: {runStatus.error}
+        </Text>
+      )}
+      {startScan.isError && (
+        <Text size="sm" c="red">
+          Could not start scan: {startScan.error.message}
+        </Text>
+      )}
+    </Stack>
   );
 }

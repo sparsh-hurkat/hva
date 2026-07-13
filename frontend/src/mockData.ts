@@ -4,7 +4,10 @@
 import {
   countsFromIssues,
   toolCountsFromIssues,
+  SEVERITY_ORDER,
   type BuildDetail,
+  type IssueSortColumn,
+  type IssuesPage,
   type ReleaseItemDetail,
   type ScanApi,
   type ScanIssue,
@@ -13,11 +16,32 @@ import {
   type Severity,
 } from "./api";
 
+const severityRank: Record<string, number> = Object.fromEntries(SEVERITY_ORDER.map((s, i) => [s, i]));
+
+// Stands in for what a real backend would do server-side: sort the flattened issue list
+// by the requested column before paginating.
+function compareIssues(a: ScanIssue, b: ScanIssue, column: IssueSortColumn): number {
+  switch (column) {
+    case "severity":
+      return severityRank[a.severity] - severityRank[b.severity];
+    case "title":
+      return a.title.localeCompare(b.title);
+    case "tool":
+      return a.toolName.localeCompare(b.toolName);
+    case "detected":
+      return (a.detectedAt ?? "").localeCompare(b.detectedAt ?? "");
+  }
+}
+
+// Fixture issues omit repoName - it's implicit from the FixtureRepo they're nested under,
+// and only gets attached when producing the flattened, paginated API response.
+type FixtureIssue = Omit<ScanIssue, "repoName">;
+
 interface FixtureRepo {
   repoName: string;
   sva: string;
   sca: string;
-  issues: ScanIssue[];
+  issues: FixtureIssue[];
 }
 
 interface FixtureBuild {
@@ -37,8 +61,16 @@ interface FixtureReleaseItem {
   builds: FixtureBuild[];
 }
 
-function issue(id: string, title: string, severity: Severity, description: string, toolName: string, detectedAt: string): ScanIssue {
-  return { id, title, severity, description, toolName, detectedAt };
+function issue(
+  id: string,
+  title: string,
+  severity: Severity,
+  description: string,
+  toolName: string,
+  detectedAt: string,
+  fixDetails: string | null,
+): FixtureIssue {
+  return { id, title, severity, description, toolName, detectedAt, fixDetails };
 }
 
 const fixtureReleaseItems: FixtureReleaseItem[] = [
@@ -72,6 +104,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "A known remote-code-execution vulnerability affects the bundled logging library. Upgrade to 2.17.1 or later.",
                 "MEND",
                 "2026-07-19T14:32:00Z",
+                "Upgrade logging-lib to 2.17.1 or later and redeploy.",
               ),
               issue(
                 "MEND-9902",
@@ -80,6 +113,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "The bundled HTTP client version is affected by a request-smuggling vulnerability.",
                 "MEND",
                 "2026-07-19T14:32:00Z",
+                "Upgrade the HTTP client dependency to the latest patched version.",
               ),
               issue(
                 "FORTIFY-221",
@@ -88,6 +122,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "A hardcoded credential was found in the configuration loading code path.",
                 "FORTIFY",
                 "2026-07-19T14:40:00Z",
+                "Remove the hardcoded credential and load it from a secrets manager instead.",
               ),
               issue(
                 "FORTIFY-198",
@@ -96,6 +131,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "An unused dependency is still bundled and should be removed.",
                 "FORTIFY",
                 "2026-07-19T14:40:00Z",
+                "Remove the unused dependency from the build.",
               ),
             ],
           },
@@ -111,6 +147,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "User-controlled search input is reflected without sufficient sanitization.",
                 "WIZ",
                 "2026-07-19T15:05:00Z",
+                "Sanitize and encode the search input before rendering it back to the page.",
               ),
             ],
           },
@@ -135,6 +172,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "A newer, non-security-related version of the JSON parsing library is available.",
                 "MEND",
                 "2026-07-19T16:00:00Z",
+                null,
               ),
             ],
           },
@@ -169,6 +207,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "A deprecated but not vulnerable encoding utility is still referenced in one module.",
                 "MEND",
                 "2026-07-17T10:12:00Z",
+                "Replace the deprecated utility with the standard library equivalent.",
               ),
               issue(
                 "FORTIFY-305",
@@ -177,6 +216,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "A duplicated code block was flagged for maintainability, not a security issue.",
                 "FORTIFY",
                 "2026-07-17T10:20:00Z",
+                null,
               ),
             ],
           },
@@ -214,6 +254,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "The data ingestion library deserializes untrusted input unsafely, allowing arbitrary code execution. Upgrade to the patched version immediately.",
                 "MEND",
                 "2026-07-24T09:00:00Z",
+                "Upgrade the data ingestion library to the patched version and disable unsafe deserialization.",
               ),
               issue(
                 "MEND-9701",
@@ -222,6 +263,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "The bundled compression library is affected by a denial-of-service vulnerability.",
                 "MEND",
                 "2026-07-24T09:00:00Z",
+                "Upgrade the compression library to the version that addresses the denial-of-service issue.",
               ),
               issue(
                 "WIZ-500",
@@ -230,6 +272,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "A query is built via string concatenation instead of parameterized SQL.",
                 "WIZ",
                 "2026-07-24T09:15:00Z",
+                "Replace string-concatenated SQL with parameterized queries.",
               ),
             ],
           },
@@ -254,6 +297,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "An internal export endpoint is missing an access control check.",
                 "FORTIFY",
                 "2026-07-24T11:30:00Z",
+                "Add an authorization check to the export endpoint before returning data.",
               ),
               issue(
                 "MEND-9720",
@@ -262,6 +306,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "A minor, non-security dependency update is available.",
                 "MEND",
                 "2026-07-24T11:35:00Z",
+                null,
               ),
             ],
           },
@@ -329,6 +374,7 @@ export const mockApiClient: ScanApi = {
       workItemId: item.workItemId,
       applicationName: item.applicationName,
       releaseDate: item.releaseDate,
+      aiSummary: item.aiSummary,
       builds: item.builds.map((build) => {
         const issues = allIssues(build);
         return {
@@ -351,7 +397,36 @@ export const mockApiClient: ScanApi = {
       pipelineUrl: build.pipelineUrl,
       sourceBranch: build.sourceBranch,
       aiSummary: build.aiSummary,
-      repositories: build.repositories,
+      repositories: build.repositories.map((repo) => ({
+        repoName: repo.repoName,
+        sva: repo.sva,
+        sca: repo.sca,
+        totalCounts: countsFromIssues(repo.issues),
+      })),
     };
+  },
+
+  async getBuildIssues(workItemId, buildId, params): Promise<IssuesPage> {
+    const build = findBuild(workItemId, buildId);
+    const allIssuesWithRepo: ScanIssue[] = build.repositories.flatMap((repo) =>
+      repo.issues.map((issue) => ({ ...issue, repoName: repo.repoName })),
+    );
+
+    const search = params.search?.trim().toLowerCase();
+    const filtered = search
+      ? allIssuesWithRepo.filter((issue) =>
+          `${issue.title} ${issue.description} ${issue.toolName} ${issue.repoName}`.toLowerCase().includes(search),
+        )
+      : allIssuesWithRepo;
+
+    const sortBy = params.sortBy ?? "severity";
+    const direction = params.sortDirection ?? "asc";
+    const sorted = [...filtered].sort((a, b) => compareIssues(a, b, sortBy));
+    if (direction === "desc") sorted.reverse();
+
+    const start = (params.page - 1) * params.pageSize;
+    const items = sorted.slice(start, start + params.pageSize);
+
+    return { items, total: sorted.length, page: params.page, pageSize: params.pageSize };
   },
 };

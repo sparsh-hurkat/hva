@@ -57,6 +57,7 @@ export interface ReleaseItemDetail {
   workItemId: number;
   applicationName: string;
   releaseDate: string | null;
+  aiSummary: string;
   builds: BuildSummary[];
 }
 
@@ -67,13 +68,16 @@ export interface ScanIssue {
   description: string;
   toolName: string;
   detectedAt: string | null;
+  fixDetails: string | null;
+  /** Which repo this issue belongs to - always present now that issues are fetched flattened/paginated across repos. */
+  repoName: string;
 }
 
-export interface RepositoryWithIssues {
+export interface RepositorySummary {
   repoName: string;
   sva: string;
   sca: string;
-  issues: ScanIssue[];
+  totalCounts: SeverityCounts;
 }
 
 export interface BuildDetail {
@@ -81,7 +85,25 @@ export interface BuildDetail {
   pipelineUrl: string;
   sourceBranch: string;
   aiSummary: string;
-  repositories: RepositoryWithIssues[];
+  repositories: RepositorySummary[];
+}
+
+export type IssueSortColumn = "severity" | "title" | "tool" | "detected";
+export type SortDirection = "asc" | "desc";
+
+export interface GetBuildIssuesParams {
+  page: number;
+  pageSize: number;
+  search?: string;
+  sortBy?: IssueSortColumn;
+  sortDirection?: SortDirection;
+}
+
+export interface IssuesPage {
+  items: ScanIssue[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface ScanApi {
@@ -90,6 +112,7 @@ export interface ScanApi {
   getSummary(): Promise<ScanSummary>;
   getReleaseItemDetail(workItemId: number): Promise<ReleaseItemDetail>;
   getBuildDetail(workItemId: number, buildId: number): Promise<BuildDetail>;
+  getBuildIssues(workItemId: number, buildId: number, params: GetBuildIssuesParams): Promise<IssuesPage>;
 }
 
 // --- severity helpers, shared by mockData.ts and the display components ---
@@ -108,11 +131,15 @@ export function emptyCounts(): SeverityCounts {
   return { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
 }
 
-function severityKey(severity: Severity): keyof SeverityCounts {
+export function totalCount(counts: SeverityCounts): number {
+  return counts.critical + counts.high + counts.medium + counts.low + counts.info;
+}
+
+export function severityKey(severity: Severity): keyof SeverityCounts {
   return severity.toLowerCase() as keyof SeverityCounts;
 }
 
-export function countsFromIssues(issues: ScanIssue[]): SeverityCounts {
+export function countsFromIssues(issues: Pick<ScanIssue, "severity">[]): SeverityCounts {
   const counts = emptyCounts();
   for (const issue of issues) {
     counts[severityKey(issue.severity)] += 1;
@@ -120,8 +147,8 @@ export function countsFromIssues(issues: ScanIssue[]): SeverityCounts {
   return counts;
 }
 
-export function toolCountsFromIssues(issues: ScanIssue[]): ToolSeverityCounts[] {
-  const byTool = new Map<string, ScanIssue[]>();
+export function toolCountsFromIssues(issues: Pick<ScanIssue, "severity" | "toolName">[]): ToolSeverityCounts[] {
+  const byTool = new Map<string, Pick<ScanIssue, "severity" | "toolName">[]>();
   for (const issue of issues) {
     const existing = byTool.get(issue.toolName) ?? [];
     existing.push(issue);
@@ -131,6 +158,15 @@ export function toolCountsFromIssues(issues: ScanIssue[]): ToolSeverityCounts[] 
     toolName,
     counts: countsFromIssues(toolIssues),
   }));
+}
+
+// Matches the org/project used throughout readme-refined.md's ADO API examples.
+const ADO_ORG = "spglobal";
+const ADO_PROJECT = "ratingsproducts";
+
+/** Deep link to the actual ADO work item, for "open this in ADO" affordances. */
+export function adoWorkItemUrl(workItemId: number): string {
+  return `https://dev.azure.com/${ADO_ORG}/${ADO_PROJECT}/_workitems/edit/${workItemId}`;
 }
 
 // --- real backend client ---
@@ -147,7 +183,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 // NOTE: assumes the backend has been updated to return releaseDate / toolCounts / aiSummary /
-// inline issues as documented in readme-refined.md's follow-up section.
+// per-repo counts (instead of inline issues) / a paginated, searchable, sortable issues
+// endpoint, as documented in readme-refined.md's follow-up section.
 export const realApiClient: ScanApi = {
   startScan: () => request("/scan-runs/start", { method: "POST" }),
   getCurrentRunStatus: () => request<ScanRunStatus>("/scan-runs/current"),
@@ -156,4 +193,13 @@ export const realApiClient: ScanApi = {
     request<ReleaseItemDetail>(`/scan-runs/current/release-items/${workItemId}`),
   getBuildDetail: (workItemId, buildId) =>
     request<BuildDetail>(`/scan-runs/current/release-items/${workItemId}/builds/${buildId}`),
+  getBuildIssues: (workItemId, buildId, params) => {
+    const query = new URLSearchParams({ page: String(params.page), pageSize: String(params.pageSize) });
+    if (params.search) query.set("search", params.search);
+    if (params.sortBy) query.set("sortBy", params.sortBy);
+    if (params.sortDirection) query.set("sortDirection", params.sortDirection);
+    return request<IssuesPage>(
+      `/scan-runs/current/release-items/${workItemId}/builds/${buildId}/issues?${query.toString()}`,
+    );
+  },
 };
