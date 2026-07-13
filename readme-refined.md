@@ -140,7 +140,7 @@ Normalize each returned alert into a `ScanIssue` with a severity from a canonica
 
 ### 10. Pluggable scanners
 
-Mend is the first of 3 planned tools. Each tool logs in/authenticates differently and returns differently-shaped data, so scanning is behind one interface:
+Mend is the first of 3 planned tools; **Fortify** and **Wiz** are the other two. Each tool logs in/authenticates differently and returns differently-shaped data, so scanning is behind one interface:
 
 ```java
 interface SecurityScannerClient {
