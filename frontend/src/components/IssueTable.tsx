@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Badge, Group, Pagination, Table, Text, TextInput, Tooltip, UnstyledButton } from "@mantine/core";
-import { ChevronDown, ChevronUp, ChevronsUpDown, Search, Wrench } from "lucide-react";
-import { SEVERITY_LABELS, type IssueSortColumn, type SortDirection } from "../api";
+import { Badge, Button, Group, Pagination, Table, Text, TextInput, Tooltip, UnstyledButton } from "@mantine/core";
+import { ChevronDown, ChevronUp, ChevronsUpDown, FileDiff, Search, Wrench } from "lucide-react";
+import { SEVERITY_LABELS, type IssueSortColumn, type ScanIssue, type SortDirection } from "../api";
 import { useBuildIssues } from "../hooks";
+import { CodeFixModal, getMockCodeFix } from "./CodeFixModal";
 import { ErrorState } from "./ErrorState";
 import { Loading } from "./Loading";
 import { SEVERITY_ICONS, SEVERITY_MANTINE_COLORS } from "./severityVisuals";
@@ -50,6 +51,7 @@ export function IssueTable({
   const [sortBy, setSortBy] = useState<IssueSortColumn>("severity");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [page, setPage] = useState(1);
+  const [fixIssue, setFixIssue] = useState<ScanIssue | null>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => setSearch(searchInput), SEARCH_DEBOUNCE_MS);
@@ -154,7 +156,17 @@ export function IssueTable({
                       </Text>
                     </Table.Td>
                     <Table.Td>
-                      {issue.fixDetails ? (
+                      {getMockCodeFix(issue.id) ? (
+                        <Button
+                          size="compact-xs"
+                          variant="light"
+                          color="green"
+                          leftSection={<FileDiff size={12} />}
+                          onClick={() => setFixIssue(issue)}
+                        >
+                          View fix
+                        </Button>
+                      ) : issue.fixDetails ? (
                         <Tooltip label={issue.fixDetails} multiline w={280} withArrow>
                           <Group gap={4} wrap="nowrap" style={{ cursor: "default" }}>
                             <Wrench size={12} color="var(--mantine-color-green-7)" />
@@ -182,6 +194,8 @@ export function IssueTable({
           )}
         </>
       )}
+
+      <CodeFixModal issue={fixIssue} opened={fixIssue !== null} onClose={() => setFixIssue(null)} />
     </>
   );
 }

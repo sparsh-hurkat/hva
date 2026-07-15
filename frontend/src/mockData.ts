@@ -116,7 +116,7 @@ const fixtureReleaseItems: FixtureReleaseItem[] = [
                 "Upgrade the HTTP client dependency to the latest patched version.",
               ),
               issue(
-                "FORTIFY-221",
+                "MEND-9700",
                 "Hardcoded credential detected in config loader",
                 "HIGH",
                 "A hardcoded credential was found in the configuration loading code path.",
