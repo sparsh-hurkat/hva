@@ -1,0 +1,464 @@
+<title>How It Works — Release Security Flow</title>
+
+<style>
+  :root {
+    --ink: #f5f1e6;
+    --ink-raised: #ffffff;
+    --text: #17203a;
+    --text-muted: #5b6478;
+    --rail: #17203a;
+    --rail-glow: rgba(23, 32, 58, 0.22);
+    --accent: #a9761e;
+    --critical: #d03b3b;
+    --resolved: #0ca30c;
+    --grid-line: rgba(23, 32, 58, 0.07);
+    --font-display: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #0b1220;
+      --ink-raised: #141d33;
+      --text: #eef1f6;
+      --text-muted: #8b97ad;
+      --rail: #f2b134;
+      --rail-glow: rgba(242, 177, 52, 0.4);
+      --accent: #f2b134;
+      --critical: #e2483d;
+      --resolved: #22c55e;
+      --grid-line: rgba(255, 255, 255, 0.06);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #0b1220;
+    --ink-raised: #141d33;
+    --text: #eef1f6;
+    --text-muted: #8b97ad;
+    --rail: #f2b134;
+    --rail-glow: rgba(242, 177, 52, 0.4);
+    --accent: #f2b134;
+    --critical: #e2483d;
+    --resolved: #22c55e;
+    --grid-line: rgba(255, 255, 255, 0.06);
+  }
+  :root[data-theme="light"] {
+    --ink: #f5f1e6;
+    --ink-raised: #ffffff;
+    --text: #17203a;
+    --text-muted: #5b6478;
+    --rail: #17203a;
+    --rail-glow: rgba(23, 32, 58, 0.22);
+    --accent: #a9761e;
+    --critical: #d03b3b;
+    --resolved: #0ca30c;
+    --grid-line: rgba(23, 32, 58, 0.07);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    font-family: var(--font-display);
+    overflow-x: hidden;
+  }
+
+  .stage-wrap {
+    width: 100%;
+    max-width: 1600px;
+    padding: 24px;
+  }
+
+  .scene {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--ink);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+  }
+
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .countdown {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    z-index: 50;
+    animation: countdownOut 0.6s ease 2.6s forwards;
+  }
+  .countdown span {
+    font-family: var(--font-mono);
+    font-size: clamp(48px, 9vw, 120px);
+    font-weight: 600;
+    color: var(--text);
+    position: absolute;
+    opacity: 0;
+  }
+  .countdown .n1 { animation: tickShow 0.9s ease 0s forwards; }
+  .countdown .n2 { animation: tickShow 0.9s ease 0.9s forwards; }
+  .countdown .n3 { animation: tickShow 0.9s ease 1.8s forwards; }
+  @keyframes tickShow {
+    0%   { opacity: 0; transform: scale(1.4); }
+    15%  { opacity: 1; transform: scale(1); }
+    85%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.9); }
+  }
+  @keyframes countdownOut {
+    to { opacity: 0; visibility: hidden; }
+  }
+
+  .header {
+    position: absolute;
+    top: 2.8%;
+    left: 3.6%;
+    z-index: 5;
+    opacity: 0;
+    animation: fadeUp 0.9s ease 3.1s forwards;
+  }
+  .eyebrow {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(18px, 2.1vw, 28px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .restart {
+    position: absolute;
+    bottom: 2.5%;
+    right: 2.5%;
+    z-index: 30;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    background: var(--ink-raised);
+    border: 1px solid var(--grid-line);
+    border-radius: 3px;
+    padding: 6px 10px;
+    cursor: pointer;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 3.6s forwards;
+  }
+  .restart:hover { border-color: var(--accent); color: var(--accent); }
+  .restart:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  svg.rail {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .seg {
+    fill: none;
+    stroke: var(--rail);
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 5px var(--rail-glow));
+    opacity: 0;
+  }
+  @keyframes segDraw {
+    0%   { opacity: 1; stroke-dashoffset: var(--len); }
+    100% { opacity: 1; stroke-dashoffset: 0; }
+  }
+
+  .pulse {
+    fill: var(--rail);
+    opacity: 0;
+    filter: drop-shadow(0 0 8px var(--rail-glow));
+  }
+  @keyframes pulseFade {
+    0%   { opacity: 0; }
+    12%  { opacity: 1; }
+    88%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .marker {
+    fill: var(--ink-raised);
+    stroke: var(--text-muted);
+    stroke-width: 2;
+    opacity: 0.4;
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0.72);
+  }
+  @keyframes markerLight {
+    to {
+      opacity: 1;
+      transform: scale(1);
+      fill: var(--rail);
+      stroke: none;
+      filter: drop-shadow(0 0 7px var(--rail-glow));
+    }
+  }
+
+  .card {
+    position: absolute;
+    width: 188px;
+    padding: 11px 13px;
+    background: var(--ink-raised);
+    border: 1px solid var(--grid-line);
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.9);
+    z-index: 4;
+  }
+
+  .card .icon {
+    width: 22px;
+    height: 22px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .card .icon svg { width: 100%; height: 100%; display: block; }
+
+  .card .label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .card .caption {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--text-muted);
+  }
+  .card .caption.closing {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--grid-line);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Reveal once, then stay - text is always visible once shown */
+  @keyframes cardReveal {
+    0%   { opacity: 0; transform: translate(-50%, var(--y-shift-from)) scale(0.88); }
+    100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  }
+
+  .card.up   { --y-shift-from: 8px; }
+  .card.down { --y-shift-from: -8px; }
+
+  /* ============ timeline (wall-clock seconds) - fast one-time reveal, ============ */
+  /* ============ then every segment loops its pulse forever after that.  ============ */
+  .seg-a { animation: segDraw 0.4s linear 3.3s forwards; }
+  .seg-b { animation: segDraw 0.4s linear 4.4s forwards; }
+  .seg-c { animation: segDraw 0.6s linear 5.5s forwards; }
+  .seg-d { animation: segDraw 0.5s linear 5.5s forwards; }
+  .seg-e { animation: segDraw 0.6s linear 5.5s forwards; }
+  .seg-f { animation: segDraw 0.4s linear 6.9s forwards; }
+  .seg-g { animation: segDraw 0.6s linear 8.0s forwards; }
+  .seg-h { animation: segDraw 0.7s linear 8.0s forwards; }
+  .seg-i { animation: segDraw 0.8s linear 8.0s forwards; }
+  .seg-j { animation: segDraw 0.4s linear 9.4s forwards; }
+
+  .m-ado    { animation: markerLight 0.3s ease 3.3s forwards; }
+  .c-ado    { animation: cardReveal 0.5s ease 3.3s forwards; }
+
+  .m-rwi    { animation: markerLight 0.3s ease 4.4s forwards; }
+  .c-rwi    { animation: cardReveal 0.5s ease 4.4s forwards; }
+
+  .m-pipeline { animation: markerLight 0.3s ease 5.5s forwards; }
+  .c-pipeline { animation: cardReveal 0.5s ease 5.5s forwards; }
+
+  .m-mend    { animation: markerLight 0.3s ease 6.9s forwards; }
+  .c-mend    { animation: cardReveal 0.5s ease 6.9s forwards; }
+  .m-fortify { animation: markerLight 0.3s ease 6.9s forwards; }
+  .c-fortify { animation: cardReveal 0.5s ease 6.9s forwards; }
+  .m-wiz     { animation: markerLight 0.3s ease 6.9s forwards; }
+  .c-wiz     { animation: cardReveal 0.5s ease 6.9s forwards; }
+
+  .m-jfrog  { animation: markerLight 0.3s ease 8.0s forwards; }
+  .c-jfrog  { animation: cardReveal 0.5s ease 8.0s forwards; }
+
+  .m-spark  { animation: markerLight 0.3s ease 9.4s forwards; }
+  .c-spark  { animation: cardReveal 0.5s ease 9.4s forwards; }
+
+  .m-dashboard { animation: markerLight 0.3s ease 10.5s forwards; }
+  .c-dashboard { animation: cardReveal 0.5s ease 10.5s forwards; }
+
+  /* Pulses: each loops forever from its own start time, at a steady fast cadence */
+  .p-a { animation: pulseFade 1.2s linear 3.3s infinite; }
+  .p-b { animation: pulseFade 1.2s linear 4.4s infinite; }
+  .p-c { animation: pulseFade 1.6s linear 5.5s infinite; }
+  .p-d { animation: pulseFade 1.6s linear 5.5s infinite; }
+  .p-e { animation: pulseFade 1.6s linear 5.5s infinite; }
+  .p-f { animation: pulseFade 1.2s linear 6.9s infinite; }
+  .p-g { animation: pulseFade 1.6s linear 8.0s infinite; }
+  .p-h { animation: pulseFade 1.6s linear 8.0s infinite; }
+  .p-i { animation: pulseFade 1.6s linear 8.0s infinite; }
+  .p-j { animation: pulseFade 1.2s linear 9.4s infinite; }
+
+  /* Reduced motion: show everything settled, no animation */
+  .reduced-motion .seg { opacity: 1; stroke-dashoffset: 0; animation: none; }
+  .reduced-motion .marker { opacity: 1; transform: scale(1); animation: none; }
+  .reduced-motion .card { opacity: 1; transform: translate(-50%, 0) scale(1); animation: none; }
+  .reduced-motion .pulse { display: none; }
+  .reduced-motion .header { opacity: 1; animation: none; }
+  .reduced-motion .countdown { display: none; }
+  .reduced-motion .restart { opacity: 1; animation: none; }
+</style>
+
+<div class="stage-wrap">
+  <div class="scene" id="scene">
+    <div class="grid-bg"></div>
+
+    <div class="countdown">
+      <span class="n1">3</span><span class="n2">2</span><span class="n3">1</span>
+    </div>
+
+    <div class="header">
+      <span class="eyebrow">HOW IT WORKS</span>
+      <h1>Six sources, one view of release risk</h1>
+    </div>
+
+    <button class="restart" onclick="location.reload()">⟲ RESTART</button>
+
+    <!-- viewBox 1900x1300: ADO(140,650) RWI(480,650) Pipeline(815,650)
+         Mend(1155,320) Fortify(1155,650) Wiz(1155,980) JFrog(1495,320)
+         SparkAI(1830,650) Dashboard(2170,650) -->
+    <svg class="rail" viewBox="0 0 2310 1300" preserveAspectRatio="none">
+      <path class="seg seg-a" style="--len:340" stroke-dasharray="340" d="M140,650 L480,650" />
+      <path class="seg seg-b" style="--len:340" stroke-dasharray="340" d="M480,650 L815,650" />
+      <path class="seg seg-c" style="--len:600" stroke-dasharray="600" d="M815,650 C985,650 985,320 1155,320" />
+      <path class="seg seg-d" style="--len:340" stroke-dasharray="340" d="M815,650 L1155,650" />
+      <path class="seg seg-e" style="--len:600" stroke-dasharray="600" d="M815,650 C985,650 985,980 1155,980" />
+      <path class="seg seg-f" style="--len:340" stroke-dasharray="340" d="M1155,320 L1495,320" />
+      <path class="seg seg-g" style="--len:600" stroke-dasharray="600" d="M1495,320 C1663,320 1663,650 1830,650" />
+      <path class="seg seg-h" style="--len:700" stroke-dasharray="700" d="M1155,650 L1830,650" />
+      <path class="seg seg-i" style="--len:900" stroke-dasharray="900" d="M1155,980 C1493,980 1493,650 1830,650" />
+      <path class="seg seg-j" style="--len:340" stroke-dasharray="340" d="M1830,650 L2170,650" />
+
+      <!-- travel pulses: SMIL keyTimes hold at start until the CSS fade-in point, travel
+           across the visible window, then hold at the end until the fade-out completes.
+           repeatCount indefinite keeps every connection constantly flowing. -->
+      <circle class="pulse p-a" r="8"><animateMotion path="M140,650 L480,650" begin="3.3s" dur="1.2s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+      <circle class="pulse p-b" r="8"><animateMotion path="M480,650 L815,650" begin="4.4s" dur="1.2s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+      <circle class="pulse p-c" r="8"><animateMotion path="M815,650 C985,650 985,320 1155,320" begin="5.5s" dur="1.6s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+      <circle class="pulse p-d" r="8"><animateMotion path="M815,650 L1155,650" begin="5.5s" dur="1.6s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+      <circle class="pulse p-e" r="8"><animateMotion path="M815,650 C985,650 985,980 1155,980" begin="5.5s" dur="1.6s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+      <circle class="pulse p-f" r="8"><animateMotion path="M1155,320 L1495,320" begin="6.9s" dur="1.2s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+      <circle class="pulse p-g" r="8"><animateMotion path="M1495,320 C1663,320 1663,650 1830,650" begin="8.0s" dur="1.6s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+      <circle class="pulse p-h" r="8"><animateMotion path="M1155,650 L1830,650" begin="8.0s" dur="1.6s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+      <circle class="pulse p-i" r="8"><animateMotion path="M1155,980 C1493,980 1493,650 1830,650" begin="8.0s" dur="1.6s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+      <circle class="pulse p-j" r="8"><animateMotion path="M1830,650 L2170,650" begin="9.4s" dur="1.2s" keyTimes="0;0.12;0.88;1" keyPoints="0;0;1;1" calcMode="linear" repeatCount="indefinite" /></circle>
+
+      <!-- markers -->
+      <circle class="marker m-ado" cx="140" cy="650" r="11" />
+      <circle class="marker m-rwi" cx="480" cy="650" r="11" />
+      <circle class="marker m-pipeline" cx="815" cy="650" r="11" />
+      <circle class="marker m-mend" cx="1155" cy="320" r="11" />
+      <circle class="marker m-fortify" cx="1155" cy="650" r="11" />
+      <circle class="marker m-wiz" cx="1155" cy="980" r="11" />
+      <circle class="marker m-jfrog" cx="1495" cy="320" r="11" />
+      <circle class="marker m-spark" cx="1830" cy="650" r="11" />
+      <circle class="marker m-dashboard" cx="2170" cy="650" r="13" />
+    </svg>
+
+    <!-- ADO: above node, node at 5.79%/50% -->
+    <div class="card c-ado down" style="left:5.8%; top:43.1%; transform: translate(-50%, -100%);">
+      <div class="icon"><svg viewBox="0 0 28 28"><path d="M6 20 L14 8 L22 20" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="20" r="2.4" fill="currentColor"/><circle cx="14" cy="8" r="2.4" fill="currentColor"/><circle cx="22" cy="20" r="2.4" fill="currentColor"/></svg></div>
+      <div class="label">AZURE DEVOPS</div>
+      <div class="caption">Pulls every upcoming Release Work Item (RWI).</div>
+    </div>
+
+    <!-- RWI: below node, node at 20.53%/50% -->
+    <div class="card c-rwi up" style="left:20.5%; top:56.9%;">
+      <div class="icon"><svg viewBox="0 0 28 28"><path d="M4 6h20v12H11l-5 4v-4H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M8 11h12M8 15h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div class="label">RWI COMMENTS</div>
+      <div class="caption">Reads repo name and branch from the RWI's comments.</div>
+    </div>
+
+    <!-- Pipeline: above node, node at 35.26%/50% -->
+    <div class="card c-pipeline down" style="left:35.3%; top:43.1%; transform: translate(-50%, -100%);">
+      <div class="icon"><svg viewBox="0 0 28 28"><rect x="3" y="3" width="22" height="22" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 9l8 5-8 5z" fill="currentColor"/></svg></div>
+      <div class="label">PIPELINE RUN</div>
+      <div class="caption">Triggers a fresh build on that repo and branch.</div>
+    </div>
+
+    <!-- Mend: above node (top lane), node at 50%/24.6% -->
+    <div class="card c-mend up" style="left:50%; top:17.7%; transform: translate(-50%, -100%);">
+      <div class="icon"><svg viewBox="0 0 28 28"><path d="M14 4L4 9l10 5 10-5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 14l10 5 10-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 19l10 5 10-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
+      <div class="label" style="color:var(--critical);">MEND API</div>
+      <div class="caption">Called directly &mdash; flags vulnerable dependencies.</div>
+    </div>
+
+    <!-- Fortify: below node (middle lane), node at 50%/50% -->
+    <div class="card c-fortify up" style="left:50%; top:56.9%;">
+      <div class="icon"><svg viewBox="0 0 28 28"><path d="M10 6L3 14l7 8M18 6l7 8-7 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="label">FORTIFY API</div>
+      <div class="caption">Called directly &mdash; flags static code vulnerabilities.</div>
+    </div>
+
+    <!-- Wiz: below node (bottom lane), node at 50%/75.4% -->
+    <div class="card c-wiz up" style="left:50%; top:82.3%;">
+      <div class="icon"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 14 L21 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <div class="label">WIZ (PIPELINE)</div>
+      <div class="caption">Scans inside the pipeline run &mdash; read from there, not its own API call.</div>
+    </div>
+
+    <!-- JFrog: above node (top lane), node at 64.74%/24.6% -->
+    <div class="card c-jfrog down" style="left:64.7%; top:17.7%; transform: translate(-50%, -100%);">
+      <div class="icon"><svg viewBox="0 0 28 28"><path d="M14 3l11 6v10l-11 6-11-6V9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 9l11 6 11-6M14 15v10" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="label">JFROG ARTIFACTORY</div>
+      <div class="caption">Flags Mend-detected packages published in the last 7 days.</div>
+    </div>
+
+    <!-- Spark AI: below node (middle lane), node at 79.47%/50% -->
+    <div class="card c-spark up" style="left:79.5%; top:56.9%;">
+      <div class="icon"><svg viewBox="0 0 28 28"><path d="M14 3v8M14 17v8M3 14h8M17 14h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 7l4 4M17 17l4 4M21 7l-4 4M11 17l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/></svg></div>
+      <div class="label">SPARK AI</div>
+      <div class="caption">Scrapes the repo, then writes the summary and the suggested fix.</div>
+    </div>
+
+    <!-- Dashboard: below node (middle lane, terminus), node at 94.21%/50% -->
+    <div class="card c-dashboard up" style="left:94.2%; top:56.9%;">
+      <div class="icon" style="color:var(--resolved);"><svg viewBox="0 0 28 28"><rect x="3" y="3" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="15" y="3" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="10" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="15" y="13" width="10" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+      <div class="label">DASHBOARD</div>
+      <div class="caption">Release managers drill in, see the fix, and open the PR.</div>
+      <div class="caption closing">Six sources. One dashboard. Full visibility.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.getElementById('scene').classList.add('reduced-motion');
+  }
+</script>
