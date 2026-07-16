@@ -1,4 +1,4 @@
-<title>The New Workflow — Consolidation</title>
+<title>The New Workflow — Sources to Outcomes</title>
 
 <style>
   :root {
@@ -18,16 +18,9 @@
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --ink: #0b1220;
-      --ink-raised: #141d33;
-      --text: #eef1f6;
-      --text-muted: #8b97ad;
-      --rail: #f2b134;
-      --rail-glow: rgba(242, 177, 52, 0.4);
-      --accent: #f2b134;
-      --critical: #e2483d;
-      --resolved: #22c55e;
-      --grid-line: rgba(255, 255, 255, 0.06);
+      --ink: #0b1220; --ink-raised: #141d33; --text: #eef1f6; --text-muted: #8b97ad;
+      --rail: #f2b134; --rail-glow: rgba(242, 177, 52, 0.4); --accent: #f2b134;
+      --critical: #e2483d; --resolved: #22c55e; --grid-line: rgba(255, 255, 255, 0.06);
     }
   }
   :root[data-theme="dark"] {
@@ -76,29 +69,9 @@
     pointer-events: none;
   }
 
-  .countdown {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: var(--ink); z-index: 50;
-    animation: countdownOut 0.6s ease 2.6s forwards;
-  }
-  .countdown span {
-    font-family: var(--font-mono); font-size: clamp(48px, 9vw, 120px); font-weight: 600;
-    color: var(--text); position: absolute; opacity: 0;
-  }
-  .countdown .n1 { animation: tickShow 0.9s ease 0s forwards; }
-  .countdown .n2 { animation: tickShow 0.9s ease 0.9s forwards; }
-  .countdown .n3 { animation: tickShow 0.9s ease 1.8s forwards; }
-  @keyframes tickShow {
-    0% { opacity: 0; transform: scale(1.4); }
-    15% { opacity: 1; transform: scale(1); }
-    85% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(0.9); }
-  }
-  @keyframes countdownOut { to { opacity: 0; visibility: hidden; } }
-
   .header {
-    position: absolute; top: 3%; left: 4%; z-index: 5; opacity: 0;
-    animation: fadeUp 0.9s ease 3.1s forwards;
+    position: absolute; top: 4%; left: 4%; z-index: 5; opacity: 0;
+    animation: fadeUp 0.7s ease 0.1s forwards;
   }
   .eyebrow {
     display: block; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.18em;
@@ -115,258 +88,231 @@
     position: absolute; bottom: 2.5%; right: 2.5%; z-index: 30;
     font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; color: var(--text-muted);
     background: var(--ink-raised); border: 1px solid var(--grid-line); border-radius: 3px;
-    padding: 6px 10px; cursor: pointer; opacity: 0; animation: fadeUp 0.6s ease 3.6s forwards;
+    padding: 6px 10px; cursor: pointer; opacity: 0; animation: fadeUp 0.6s ease 0.3s forwards;
   }
   .restart:hover { border-color: var(--accent); color: var(--accent); }
   .restart:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  /* ---- chaos panels ---- */
-  .chaos-panel {
+  .layout {
     position: absolute;
-    width: 150px;
-    z-index: 3;
-    opacity: 0;
+    inset: 20% 4% 8% 4%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2.5%;
   }
-  .win {
+
+  .col { display: flex; flex-direction: column; height: 100%; }
+  .col-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  /* ---- sources (left) ---- */
+  .sources-col { flex: 0 0 43%; }
+  .sources-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    align-content: center;
+    flex: 1;
+  }
+
+  .src-card {
     background: var(--ink-raised);
     border: 1px solid var(--grid-line);
-    border-radius: 5px;
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
-    overflow: hidden;
+    border-radius: 6px;
+    padding: 14px 12px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    transform: translateY(14px) rotate(var(--tilt, 0deg));
+    animation: cardIn 0.5s ease forwards;
   }
-  .win-header {
-    display: flex; gap: 4px; align-items: center;
-    padding: 6px 8px; background: var(--grid-line);
-  }
-  .win-header span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); opacity: 0.6; }
-  .win-body { padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; color: var(--text); }
+  .src-card .icon { width: 26px; height: 26px; margin: 0 auto 8px; color: var(--accent); }
+  .src-card .icon svg { width: 100%; height: 100%; display: block; }
+  .src-card .name { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; color: var(--text); }
 
-  .wiggle { animation: wiggle 1.7s ease-in-out infinite; transform-origin: center; }
-  @keyframes wiggle {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(2.2deg); }
-  }
-
-  @keyframes chaosAdo {
-    0%   { opacity: 0; left: 15.15%; top: 15.38%; transform: rotate(-7deg) scale(0.6); }
-    10%  { opacity: 1; left: 15.15%; top: 15.38%; transform: rotate(-7deg) scale(1); }
-    85%  { opacity: 1; left: 15.15%; top: 15.38%; transform: rotate(-7deg) scale(1); }
-    100% { opacity: 0; left: 75.76%; top: 24.62%; transform: rotate(0deg) scale(0.25); }
-  }
-  @keyframes chaosMend {
-    0%   { opacity: 0; left: 30.3%; top: 13.85%; transform: rotate(5deg) scale(0.6); }
-    10%  { opacity: 1; left: 30.3%; top: 13.85%; transform: rotate(5deg) scale(1); }
-    85%  { opacity: 1; left: 30.3%; top: 13.85%; transform: rotate(5deg) scale(1); }
-    100% { opacity: 0; left: 75.76%; top: 24.62%; transform: rotate(0deg) scale(0.25); }
-  }
-  @keyframes chaosFortify {
-    0%   { opacity: 0; left: 12.99%; top: 32.31%; transform: rotate(9deg) scale(0.6); }
-    10%  { opacity: 1; left: 12.99%; top: 32.31%; transform: rotate(9deg) scale(1); }
-    85%  { opacity: 1; left: 12.99%; top: 32.31%; transform: rotate(9deg) scale(1); }
-    100% { opacity: 0; left: 75.76%; top: 24.62%; transform: rotate(0deg) scale(0.25); }
-  }
-  @keyframes chaosWiz {
-    0%   { opacity: 0; left: 32.47%; top: 34.62%; transform: rotate(-6deg) scale(0.6); }
-    10%  { opacity: 1; left: 32.47%; top: 34.62%; transform: rotate(-6deg) scale(1); }
-    85%  { opacity: 1; left: 32.47%; top: 34.62%; transform: rotate(-6deg) scale(1); }
-    100% { opacity: 0; left: 75.76%; top: 24.62%; transform: rotate(0deg) scale(0.25); }
-  }
-  @keyframes chaosJfrog {
-    0%   { opacity: 0; left: 45.45%; top: 19.23%; transform: rotate(4deg) scale(0.6); }
-    10%  { opacity: 1; left: 45.45%; top: 19.23%; transform: rotate(4deg) scale(1); }
-    85%  { opacity: 1; left: 45.45%; top: 19.23%; transform: rotate(4deg) scale(1); }
-    100% { opacity: 0; left: 75.76%; top: 24.62%; transform: rotate(0deg) scale(0.25); }
+  @keyframes cardIn {
+    to { opacity: 1; transform: translateY(0) rotate(var(--tilt, 0deg)); }
   }
 
-  .p-ado     { animation: chaosAdo 4.5s ease-in 3.3s forwards; }
-  .p-mend    { animation: chaosMend 4.5s ease-in 3.5s forwards; }
-  .p-fortify { animation: chaosFortify 4.5s ease-in 3.7s forwards; }
-  .p-wiz     { animation: chaosWiz 4.5s ease-in 3.9s forwards; }
-  .p-jfrog   { animation: chaosJfrog 4.5s ease-in 4.1s forwards; }
+  .src-1 { --tilt: -2deg; animation-delay: 0.35s; }
+  .src-2 { --tilt: 1.5deg; animation-delay: 0.43s; }
+  .src-3 { --tilt: -1deg; animation-delay: 0.51s; }
+  .src-4 { --tilt: 2deg; animation-delay: 0.59s; }
+  .src-5 { --tilt: -1.5deg; animation-delay: 0.67s; }
+  .src-6 { --tilt: 1deg; animation-delay: 0.75s; }
+  .src-6 .icon { color: var(--rail); }
+  .src-6 { border-color: var(--rail-glow); }
 
-  /* ---- dashboard (the consolidation target) ---- */
-  .dashboard {
-    position: absolute;
-    left: 75.76%; top: 24.62%;
-    transform: translate(-50%, -50%) scale(0);
-    width: 280px;
-    padding: 20px 22px;
+  .arrow {
+    flex: 0 0 auto;
+    font-size: 30px;
+    color: var(--accent);
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.9s forwards;
+  }
+
+  /* ---- dashboard (middle) ---- */
+  .dashboard-col {
+    flex: 0 0 16%;
+    align-items: center;
+    justify-content: center;
+  }
+  .dashboard-col .col-label { text-align: center; }
+
+  .dashboard-card {
+    width: 168px;
+    background: var(--ink-raised);
+    border: 1px solid var(--grid-line);
+    border-radius: 10px;
+    padding: 22px 18px;
+    text-align: center;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+    opacity: 0;
+    transform: scale(0.9);
+    animation: popIn 0.6s cubic-bezier(.2,.8,.3,1.2) 1.05s forwards;
+  }
+  @keyframes popIn {
+    to { opacity: 1; transform: scale(1); }
+  }
+  .dashboard-card .icon { width: 34px; height: 34px; margin: 0 auto 10px; color: var(--rail); }
+  .dashboard-card .icon svg { width: 100%; height: 100%; display: block; }
+  .dashboard-card .name { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: var(--text); margin-bottom: 6px; }
+  .dashboard-card .caption { font-size: 11px; line-height: 1.4; color: var(--text-muted); }
+
+  /* ---- outcomes (right) ---- */
+  .outputs-col {
+    flex: 0 0 33%;
+    justify-content: center;
+    gap: 20px;
+  }
+  .outputs-col .col-label { text-align: left; }
+
+  .output-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .mini-arrow {
+    flex: 0 0 auto;
+    font-size: 22px;
+    color: var(--accent);
+    opacity: 0;
+    animation: fadeUp 0.4s ease forwards;
+  }
+  .output-card {
+    flex: 1;
     background: var(--ink-raised);
     border: 1px solid var(--grid-line);
     border-radius: 8px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
-    text-align: center;
+    padding: 14px 16px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
     opacity: 0;
-    z-index: 6;
-    animation: dashboardIn 1.7s cubic-bezier(.2,.8,.3,1.3) 7.1s forwards, dashboardGlow 3s ease-in-out 8.8s infinite;
+    transform: translateX(10px);
+    animation: cardInX 0.5s ease forwards;
   }
-  @keyframes dashboardIn {
-    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0); }
-    70%  { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
-    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  @keyframes cardInX {
+    to { opacity: 1; transform: translateX(0); }
   }
-  @keyframes dashboardGlow {
-    0%, 100% { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18), 0 0 0 rgba(0,0,0,0); }
-    50%      { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18), 0 0 26px var(--rail-glow); }
-  }
-  .dashboard .icon { width: 34px; height: 34px; color: var(--resolved); margin: 0 auto 10px; }
-  .dashboard .icon svg { width: 100%; height: 100%; display: block; }
-  .dashboard .label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: var(--text); }
+  .output-card .icon { width: 24px; height: 24px; margin-bottom: 8px; color: var(--resolved); }
+  .output-card .icon svg { width: 100%; height: 100%; display: block; }
+  .output-card .name { font-size: 12.5px; font-weight: 700; letter-spacing: 0.05em; color: var(--text); margin-bottom: 5px; }
+  .output-card .caption { font-size: 11.5px; line-height: 1.4; color: var(--text-muted); }
 
-  /* ---- checklist ---- */
-  .checklist {
-    position: absolute;
-    left: 50%; top: 54%;
-    width: 46%;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    z-index: 5;
-  }
-  .check-item {
-    display: flex; align-items: center; gap: 10px;
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  .check-item .tick {
-    width: 22px; height: 22px; flex-shrink: 0;
-    border-radius: 50%;
-    background: var(--resolved);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .check-item .tick svg { width: 13px; height: 13px; }
-  .check-item span.text { font-size: 15px; font-weight: 600; color: var(--text); }
+  .row-1 .mini-arrow, .row-1 .output-card { animation-delay: 1.35s; }
+  .row-2 .mini-arrow, .row-2 .output-card { animation-delay: 1.5s; }
 
-  @keyframes checkIn {
-    to { opacity: 1; transform: translateY(0); }
+  /* Reduced motion: show everything settled immediately */
+  .reduced-motion .header,
+  .reduced-motion .restart,
+  .reduced-motion .src-card,
+  .reduced-motion .arrow,
+  .reduced-motion .dashboard-card,
+  .reduced-motion .mini-arrow,
+  .reduced-motion .output-card {
+    opacity: 1; animation: none; transform: none;
   }
-  .ci-1 { animation: checkIn 0.5s ease 9.3s forwards; }
-  .ci-2 { animation: checkIn 0.5s ease 9.8s forwards; }
-  .ci-3 { animation: checkIn 0.5s ease 10.3s forwards; }
-  .ci-4 { animation: checkIn 0.5s ease 10.8s forwards; }
-
-  /* ---- hero stat ---- */
-  .hero-stat {
-    position: absolute;
-    left: 50%; top: 84%;
-    width: 46%;
-    transform: translateX(0);
-    z-index: 5;
-  }
-  .hero-before {
-    font-size: 15px;
-    color: var(--text-muted);
-    text-decoration: line-through;
-    opacity: 0;
-    animation: fadeUp 0.4s ease 11.3s forwards;
-  }
-  .hero-after {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-top: 4px;
-    opacity: 0;
-    animation: heroPop 0.6s cubic-bezier(.2,.8,.3,1.3) 11.9s forwards;
-  }
-  @keyframes heroPop {
-    0%   { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-  .hero-after .num {
-    font-size: clamp(28px, 3.4vw, 46px);
-    font-weight: 800;
-    color: var(--accent);
-    letter-spacing: -0.02em;
-  }
-  .hero-after .label {
-    font-size: 14px;
-    color: var(--text-muted);
-    font-weight: 600;
-  }
-
-  /* Reduced motion */
-  .reduced-motion .chaos-panel { display: none; }
-  .reduced-motion .dashboard { animation: none; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  .reduced-motion .check-item { animation: none; opacity: 1; transform: translateY(0); }
-  .reduced-motion .hero-before, .reduced-motion .hero-after { animation: none; opacity: 1; transform: none; }
-  .reduced-motion .header { opacity: 1; animation: none; }
-  .reduced-motion .countdown { display: none; }
-  .reduced-motion .restart { opacity: 1; animation: none; }
+  .reduced-motion .src-card { transform: rotate(var(--tilt, 0deg)); }
 </style>
 
 <div class="stage-wrap">
   <div class="scene" id="scene">
     <div class="grid-bg"></div>
 
-    <div class="countdown"><span class="n1">3</span><span class="n2">2</span><span class="n3">1</span></div>
-
     <div class="header">
       <span class="eyebrow">THE NEW WORKFLOW</span>
-      <h1>From five tools to one dashboard</h1>
+      <h1>Six sources, one dashboard, two outcomes</h1>
     </div>
 
     <button class="restart" onclick="location.reload()">⟲ RESTART</button>
 
-    <div class="chaos-panel p-ado">
-      <div class="wiggle"><div class="win">
-        <div class="win-header"><span></span><span></span><span></span></div>
-        <div class="win-body">ADO</div>
-      </div></div>
-    </div>
-    <div class="chaos-panel p-mend">
-      <div class="wiggle"><div class="win">
-        <div class="win-header"><span></span><span></span><span></span></div>
-        <div class="win-body">MEND</div>
-      </div></div>
-    </div>
-    <div class="chaos-panel p-fortify">
-      <div class="wiggle"><div class="win">
-        <div class="win-header"><span></span><span></span><span></span></div>
-        <div class="win-body">FORTIFY</div>
-      </div></div>
-    </div>
-    <div class="chaos-panel p-wiz">
-      <div class="wiggle"><div class="win">
-        <div class="win-header"><span></span><span></span><span></span></div>
-        <div class="win-body">WIZ</div>
-      </div></div>
-    </div>
-    <div class="chaos-panel p-jfrog">
-      <div class="wiggle"><div class="win">
-        <div class="win-header"><span></span><span></span><span></span></div>
-        <div class="win-body">JFROG</div>
-      </div></div>
-    </div>
+    <div class="layout">
+      <div class="col sources-col">
+        <span class="col-label">SOURCES</span>
+        <div class="sources-grid">
+          <div class="src-card src-1">
+            <div class="icon"><svg viewBox="0 0 28 28"><path d="M6 20 L14 8 L22 20" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="20" r="2.4" fill="currentColor"/><circle cx="14" cy="8" r="2.4" fill="currentColor"/><circle cx="22" cy="20" r="2.4" fill="currentColor"/></svg></div>
+            <div class="name">AZURE DEVOPS</div>
+          </div>
+          <div class="src-card src-2">
+            <div class="icon"><svg viewBox="0 0 28 28"><path d="M14 4L4 9l10 5 10-5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 14l10 5 10-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 19l10 5 10-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
+            <div class="name">MEND</div>
+          </div>
+          <div class="src-card src-3">
+            <div class="icon"><svg viewBox="0 0 28 28"><path d="M10 6L3 14l7 8M18 6l7 8-7 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="name">FORTIFY</div>
+          </div>
+          <div class="src-card src-4">
+            <div class="icon"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 14 L21 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <div class="name">WIZ</div>
+          </div>
+          <div class="src-card src-5">
+            <div class="icon"><svg viewBox="0 0 28 28"><path d="M14 3l11 6v10l-11 6-11-6V9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 9l11 6 11-6M14 15v10" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></svg></div>
+            <div class="name">JFROG</div>
+          </div>
+          <div class="src-card src-6">
+            <div class="icon"><svg viewBox="0 0 28 28"><path d="M14 3v8M14 17v8M3 14h8M17 14h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 7l4 4M17 17l4 4M21 7l-4 4M11 17l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/></svg></div>
+            <div class="name">SPARK AI</div>
+          </div>
+        </div>
+      </div>
 
-    <div class="dashboard">
-      <div class="icon"><svg viewBox="0 0 28 28"><rect x="3" y="3" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="15" y="3" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="10" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="15" y="13" width="10" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
-      <div class="label">DASHBOARD</div>
-    </div>
+      <div class="arrow">→</div>
 
-    <div class="checklist">
-      <div class="check-item ci-1">
-        <span class="tick"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5 9-10" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <span class="text">One dashboard, one login</span>
+      <div class="col dashboard-col">
+        <span class="col-label">DASHBOARD</span>
+        <div class="dashboard-card">
+          <div class="icon"><svg viewBox="0 0 28 28"><rect x="3" y="3" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="15" y="3" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="10" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="15" y="13" width="10" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+          <div class="name">DASHBOARD</div>
+          <div class="caption">Correlates every source into one view.</div>
+        </div>
       </div>
-      <div class="check-item ci-2">
-        <span class="tick"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5 9-10" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <span class="text">Automatic ADO correlation</span>
-      </div>
-      <div class="check-item ci-3">
-        <span class="tick"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5 9-10" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <span class="text">Plain-language AI summary</span>
-      </div>
-      <div class="check-item ci-4">
-        <span class="tick"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5 9-10" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <span class="text">See the fix inline, no escalation</span>
-      </div>
-    </div>
 
-    <div class="hero-stat">
-      <div class="hero-before">Hours of manual review</div>
-      <div class="hero-after">
-        <span class="num">[X]</span>
-        <span class="label">MINUTES PER RELEASE</span>
+      <div class="col outputs-col">
+        <span class="col-label">OUTCOMES</span>
+
+        <div class="output-row row-1">
+          <span class="mini-arrow">→</span>
+          <div class="output-card">
+            <div class="icon"><svg viewBox="0 0 28 28"><rect x="3" y="6" width="22" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 7l10 8 10-8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="name">RELEASE SCAN REPORT</div>
+            <div class="caption">Emailed to release managers automatically.</div>
+          </div>
+        </div>
+
+        <div class="output-row row-2">
+          <span class="mini-arrow">→</span>
+          <div class="output-card">
+            <div class="icon"><svg viewBox="0 0 28 28"><circle cx="7" cy="21" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="21" cy="14" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 10v8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M10 7h5a4 4 0 0 1 4 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="name">PR GENERATION</div>
+            <div class="caption">Opens a pull request with the suggested fix.</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
